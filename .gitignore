@@ -1,5 +1,5 @@
-
-node_modules
+# Configuration
+.env
 
 # Logs
 logs
@@ -27,3 +27,5 @@ dist-ssr
 *.sw?
 
 cache
+artifacts
+typechain
