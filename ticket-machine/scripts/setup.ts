@@ -16,16 +16,13 @@ async function main() {
   console.log("Event created")
 
   // Create POS
-  await Promise.all([
-    ticketMachine.addPOS(process.env.TEST_ADDRESS!!),
-    ticketMachine.addPOSForEvent(eventId, process.env.TEST_ADDRESS!!)
-  ])
+  await ticketMachine.addPOS(process.env.TEST_ADDRESS!!)
+  await ticketMachine.addPOSForEvent(eventId, process.env.TEST_ADDRESS!!)
   console.log("POS configured")
   
   // Create Scanner
-  await Promise.all([
-    ticketMachine.addScanner(eventId, process.env.TEST_ADDRESS!!),
-  ])
+  await ticketMachine.addScanner(eventId, process.env.TEST_ADDRESS!!)
+
   console.log("Done")
 }
 
