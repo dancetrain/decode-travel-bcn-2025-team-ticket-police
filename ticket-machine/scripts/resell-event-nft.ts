@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 
 async function main() {
   // UPDATE THESE TWO LINES
-  const contractAddress = process.env.CONTRACT_ADDRESS;   // ← your real deployed address
+  const contractAddress = process.env.EVENTNFT_CONTRACT_ADDRESS!!;   // ← your real deployed address
   const tokenId = process.env.TOKEN_ID;                   // ← the token you just minted
 
   if (contractAddress === "") {

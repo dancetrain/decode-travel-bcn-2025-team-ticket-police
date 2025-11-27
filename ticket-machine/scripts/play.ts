@@ -9,9 +9,10 @@ async function sleep(ms: number) {
 }
 
 async function main() {
-  const ticketMachine = await ethers.getContractAt("TicketMachine", process.env.TICKET_OFFICER_ADDRESS!!)
+  const [deployer] = await ethers.getSigners();
+  const ticketMachine = await ethers.getContractAt("TicketMachine", process.env.TICKET_MACHINE_CONTRACT_ADDRESS!!)
   const eventId = 1
-  const buyer = process.env.TEST_ADDRESS!!
+  const buyer = deployer.address
 
   var ticketMinted: TicketMintedEvent | undefined
 

@@ -2,8 +2,10 @@ import { ethers } from "hardhat";
 import { TicketMachine } from "../typechain";
 
 async function main() {
-  const ticketMachine = await ethers.getContractAt("TicketMachine", process.env.TICKET_OFFICER_ADDRESS!!)
+  const [deployer] = await ethers.getSigners();
+  const ticketMachine = await ethers.getContractAt("TicketMachine", process.env.TICKET_MACHINE_CONTRACT_ADDRESS!!)
   const eventId = 1
+  const address = deployer.address
 
   // Create Event
   await ticketMachine.createEvent(
@@ -16,12 +18,15 @@ async function main() {
   console.log("Event created")
 
   // Create POS
-  await ticketMachine.addPOS(process.env.TEST_ADDRESS!!)
-  await ticketMachine.addPOSForEvent(eventId, process.env.TEST_ADDRESS!!)
+  await ticketMachine.addPOS(address)
   console.log("POS configured")
   
+  await ticketMachine.addPOSForEvent(eventId, address)
+  console.log("POS Assigned to Event")
+
   // Create Scanner
-  await ticketMachine.addScanner(eventId, process.env.TEST_ADDRESS!!)
+  await ticketMachine.addScanner(eventId, address)
+  console.log("Scanner assigned to event")
 
   console.log("Done")
 }

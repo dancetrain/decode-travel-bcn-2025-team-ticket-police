@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 
 async function main() {
   // UPDATE THIS AFTER DEPLOYMENT
-  const contractAddress = process.env.CONTRACT_ADDRESS;
+  const contractAddress = process.env.EVENTNFT_CONTRACT_ADDRESS!!;
 
   if (!contractAddress || contractAddress === "") {
     throw new Error("Please set your deployed EventNFT address in the script!");
