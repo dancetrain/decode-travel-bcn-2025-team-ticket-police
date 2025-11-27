@@ -1,6 +1,8 @@
 # Configuration
 .env
 
+node_modules
+
 # Logs
 logs
 *.log
@@ -27,5 +29,10 @@ dist-ssr
 *.sw?
 
 cache
-artifacts
-typechain
+.env
+
+# Hardhat files
+artifacts/
+cache/
+typechain/
+typechain-types/
