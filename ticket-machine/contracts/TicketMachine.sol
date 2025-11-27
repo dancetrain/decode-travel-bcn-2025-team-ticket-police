@@ -6,39 +6,39 @@ pragma solidity ^0.8.20;
  * @notice ERC-721 ticket sale contract with:
  *         • Whitelisted POS terminals for fiat-based sales.
  *         • Deterministic QR payload per ticket.
- *         • **Multiple authorized entrance scanners per event**.
+ *         • Multiple authorized entrance scanners per event.
  */
+
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TicketMachine is ERC721URIStorage, Ownable {
-    /* -------------------------------------------------------------------- */
-    /*                               STATE                                   */
-    /* -------------------------------------------------------------------- */
+    /* --------------------------------------------------------------------
+       STATE
+    -------------------------------------------------------------------- */
 
-    uint256 private _nextTokenId = 1;                     // incremental token IDs
+    uint256 private _nextTokenId = 1; // incremental token IDs
 
     // ---------- POS (point-of-sale) ----------
-    mapping(address => bool) public isPOS;               // whitelisted POS terminals
+    mapping(address => bool) public isPOS; // global whitelist
 
-    // per-event POS whitelist
-    // eventId => POS address => authorized?
-    mapping(uint256 => mapping(address => bool)) public eventPOS; 
+    // per-event POS whitelist: eventId => POS address => authorized?
+    mapping(uint256 => mapping(address => bool)) public eventPOS;
 
     // ---------- Event data ----------
     struct EventInfo {
-        string name;          // human-readable name
-        uint256 date;         // unix timestamp (optional)
-        string venue;         // venue description
-        uint256 maxTickets;   // hard cap
-        uint256 minted;       // tickets already minted
+        string name;      // human-readable name
+        uint256 date;     // unix timestamp (optional)
+        string venue;     // venue description
+        uint256 maxTickets; // hard cap
+        uint256 minted;   // tickets already minted
     }
 
     // eventId => EventInfo
     mapping(uint256 => EventInfo) public events;
 
     // eventId => scanner address => authorized?
-    // Allows **many** scanners per event.
+    // Allows many scanners per event.
     mapping(uint256 => mapping(address => bool)) public eventScanners;
 
     // ---------- Ticket usage ----------
@@ -48,10 +48,9 @@ contract TicketMachine is ERC721URIStorage, Ownable {
     // tokenId => eventId (so we can verify ticket belongs to the claimed event)
     mapping(uint256 => uint256) private _ticketEvent;
 
-    /* -------------------------------------------------------------------- */
-    /*                               EVENTS                                   */
-    /* -------------------------------------------------------------------- */
-
+    /* --------------------------------------------------------------------
+       EVENTS
+    -------------------------------------------------------------------- */
     event POSAdded(address indexed pos);
     event POSRemoved(address indexed pos);
     event EventCreated(uint256 indexed eventId, string name, uint256 maxTickets);
@@ -70,10 +69,9 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         address indexed scanner
     );
 
-    /* -------------------------------------------------------------------- */
-    /*                               MODIFIERS                                */
-    /* -------------------------------------------------------------------- */
-
+    /* --------------------------------------------------------------------
+       MODIFIERS
+    -------------------------------------------------------------------- */
     modifier onlyPOS() {
         require(isPOS[msg.sender], "Caller is not a POS");
         _;
@@ -97,19 +95,19 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         _;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*                               CONSTRUCTOR                              */
-    /* -------------------------------------------------------------------- */
-
-    constructor(string memory _name, string memory _symbol)
-        ERC721(_name, _symbol)
+    /* --------------------------------------------------------------------
+       CONSTRUCTOR
+    -------------------------------------------------------------------- */
+    constructor(string memory name_, string memory symbol_)
+        ERC721(name_, symbol_)
+        Ownable(msg.sender)
     {}
 
-    /* -------------------------------------------------------------------- */
-    /*                         ADMIN / CONFIGURATION                        */
-    /* -------------------------------------------------------------------- */
+    /* --------------------------------------------------------------------
+       ADMIN / CONFIGURATION
+    -------------------------------------------------------------------- */
 
-    // ---------- POS management ----------
+    // ---------- Global POS management ----------
     function addPOS(address pos) external onlyOwner {
         require(pos != address(0), "Zero address");
         isPOS[pos] = true;
@@ -121,8 +119,7 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         emit POSRemoved(pos);
     }
 
-    // ------------------------------------------------------------
-    // per-event POS management
+    // ---------- Per-event POS management ----------
     /**
      * @notice Authorize a POS terminal for a specific event.
      * @dev   The POS must already be globally whitelisted via `addPOS`.
@@ -208,10 +205,9 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         emit ScannerRemoved(eventId, scanner);
     }
 
-    /* -------------------------------------------------------------------- */
-    /*                         TICKET LOGIC (POS side)                      */
-    /* -------------------------------------------------------------------- */
-
+    /* --------------------------------------------------------------------
+       TICKET LOGIC (POS side)
+    -------------------------------------------------------------------- */
     /**
      * @notice Called by a whitelisted POS after a fiat payment has been
      *         successfully processed off-chain.
@@ -252,10 +248,9 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         emit TicketMinted(buyer, tokenId, eventId, seat, qrPayload);
     }
 
-    /* -------------------------------------------------------------------- */
-    /*                         ENTRANCE SCANNER LOGIC                       */
-    /* -------------------------------------------------------------------- */
-
+    /* --------------------------------------------------------------------
+       ENTRANCE SCANNER LOGIC
+    -------------------------------------------------------------------- */
     /**
      * @notice Called by any scanner that has been authorized for the
      *         specified event. It validates the ticket and marks it as used.
@@ -275,21 +270,21 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         uint256 eventId,
         bytes32 suppliedQr
     ) external returns (bool success) {
-        // 1️⃣  Verify caller is an authorized scanner for this event.
+        // 1️⃣ Verify caller is an authorized scanner for this event.
         require(eventScanners[eventId][msg.sender], "Caller not authorized scanner");
 
-        // 2️⃣  Basic token existence & usage checks.
-        require(_exists(tokenId), "Non-existent token");
+        // 2️⃣ Basic token existence & usage checks.
+        require(_ownerOf(tokenId) != address(0), "Non-existent token");
         require(!used[tokenId], "Ticket already used");
 
-        // 3️⃣  Ensure the ticket actually belongs to the claimed event.
+        // 3️⃣ Ensure the ticket actually belongs to the claimed event.
         require(_ticketEvent[tokenId] == eventId, "Ticket/event mismatch");
 
-        // 4️⃣  Verify QR payload.
+        // 4️⃣ Verify QR payload.
         bytes32 expectedQr = _qrPayload(tokenId);
         require(expectedQr == suppliedQr, "QR payload mismatch");
 
-        // 5️⃣  All checks passed → mark as used.
+        // 5️⃣ All checks passed → mark as used.
         used[tokenId] = true;
         emit TicketValidated(tokenId, eventId, msg.sender);
         return true;
@@ -300,7 +295,7 @@ contract TicketMachine is ERC721URIStorage, Ownable {
      *         Front-ends can call this to generate the QR image.
      */
     function getQRPayload(uint256 tokenId) external view returns (bytes32) {
-        require(_exists(tokenId), "Non-existent token");
+        require(_ownerOf(tokenId) != address(0), "Non-existent token");
         return _qrPayload(tokenId);
     }
 
@@ -308,13 +303,12 @@ contract TicketMachine is ERC721URIStorage, Ownable {
      * @notice Quick on-chain check whether a ticket is still valid.
      */
     function isValid(uint256 tokenId) external view returns (bool) {
-        return _exists(tokenId) && !used[tokenId];
+        return _ownerOf(tokenId) != address(0) && !used[tokenId];
     }
 
-    /* -------------------------------------------------------------------- */
-    /*                         INTERNAL HELPERS                              */
-    /* -------------------------------------------------------------------- */
-
+    /* --------------------------------------------------------------------
+       INTERNAL HELPERS
+    -------------------------------------------------------------------- */
     /**
      * @dev Deterministic QR payload: keccak256(tokenId, contract address).
      *      Including the contract address prevents replay attacks across
@@ -324,7 +318,7 @@ contract TicketMachine is ERC721URIStorage, Ownable {
         return keccak256(abi.encodePacked(tokenId, address(this)));
     }
 
-    // Override if you need a base URI for token metadata.
+    // Override baseURI if you ever need a default prefix.
     function _baseURI() internal view virtual override returns (string memory) {
         return "";
     }
