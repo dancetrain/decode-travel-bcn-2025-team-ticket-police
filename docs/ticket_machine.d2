@@ -1,0 +1,55 @@
+TicketMachine: {
+  shape: rectangle
+  style: {
+    fill: "#f0f8ff"
+    stroke: "#0066cc"
+  }
+  label: "TicketMachine\n(Smart-contract)\n• ERC-721 tickets\n• POS whitelist\n• Per-event scanner whitelist"
+}
+
+POS: {
+  shape: rectangle
+  style: {
+    fill: "#e6ffe6"
+    stroke: "#009900"
+  }
+  label: "POS Terminal\n(whitelisted address)\n• Receives fiat payment\n• Calls recordSale()"
+}
+
+Scanner: {
+  shape: rectangle
+  style: {
+    fill: "#fff4e6"
+    stroke: "#ff8800"
+  }
+  label: "Entrance Scanner\n(authorized per event)\n• Scans QR\n• Calls validateAndConsume()"
+}
+
+Buyer: {
+  shape: oval
+  style: {
+    fill: "#ffe6f2"
+    stroke: "#cc0066"
+  }
+  label: "Visitor / Ticket Holder"
+}
+
+Event: {
+  shape: cylinder
+  style: {
+    fill: "#ffffe0"
+    stroke: "#aaaa00"
+  }
+  label: "Event (ID)\n• Name, date, venue\n• Max tickets\n• Scanner whitelist"
+}
+
+Buyer -> TicketMachine: "owns NFT\ntokenId"
+POS -> TicketMachine: "recordSale(buyer, eventId, …)"
+Scanner -> TicketMachine: "validateAndConsume(tokenId, eventId, qrPayload)"
+TicketMachine -> Event: "stores event data"
+TicketMachine -> POS: "POS whitelist (isPOS mapping)"
+TicketMachine -> Scanner: "Scanner whitelist per event (eventScanners mapping)"
+
+POS -> Buyer: "issues QR code (payload = keccak256(tokenId, contract))"
+Buyer -> Scanner: "presents QR at entrance"
+Scanner -> Buyer: "accept / reject"
