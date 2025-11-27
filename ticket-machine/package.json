@@ -21,6 +21,8 @@
     "typescript": "^4.5.4"
   },
   "scripts": {
-    "deploy": "npx hardhat run scripts/deploy.ts --network columbus"
+    "deploy": "npx hardhat run scripts/deploy.ts --network columbus",
+    "setup": "npx hardhat run scripts/setup.ts --network columbus",
+    "play": "npx hardhat run scripts/play.ts --network columbus"
   }
 }
